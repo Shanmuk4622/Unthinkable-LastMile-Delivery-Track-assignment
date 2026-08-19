@@ -292,6 +292,10 @@ export async function seed(): Promise<void> {
     const createdAt = new Date();
     createdAt.setDate(createdAt.getDate() - daysAgo);
     createdAt.setHours(8 + Math.floor(random() * 10), Math.floor(random() * 60), 0, 0);
+    // An order booked "today at 6pm" must not be in the future at seed time.
+    if (createdAt.getTime() > Date.now() - 30 * 60_000) {
+      createdAt.setTime(Date.now() - (30 + Math.floor(random() * 240)) * 60_000);
+    }
 
     const pickupArea = pick(allAreas);
     // 60% intra-city, 40% cross-zone, so both rate-card scopes get exercised.
@@ -509,10 +513,26 @@ async function writeHistory(params: {
           ? ['PENDING', 'CONFIRMED', 'CANCELLED']
           : LADDER.slice(0, LADDER.indexOf(params.targetStatus) + 1);
 
+  // Space the ladder out naturally, then compress it if the natural spacing
+  // would push the last event past "now" — a tracking event dated in the
+  // future is the fastest way to make seeded data look fake.
+  const naturalGaps = path.map(() => 45 + Math.floor(random() * 260));
+  naturalGaps[0] = 0;
+
+  const naturalSpanMin = naturalGaps.reduce((a, b) => a + b, 0);
+  const availableMin = Math.max(
+    15,
+    Math.floor((Date.now() - params.createdAt.getTime()) / 60_000) - 5,
+  );
+  const scale = naturalSpanMin > availableMin ? availableMin / naturalSpanMin : 1;
+
   let previous: OrderStatus | null = null;
   let minutes = 0;
+  let step = 0;
 
   for (const status of path) {
+    minutes += Math.round(naturalGaps[step] * scale);
+    step += 1;
     const actor = actorFor(status, params);
 
     await prisma.trackingEvent.create({
@@ -542,7 +562,6 @@ async function writeHistory(params: {
     });
 
     previous = status;
-    minutes += 45 + Math.floor(random() * 260);
   }
 }
 
@@ -563,10 +582,15 @@ function actorFor(
   };
 }
 
+/**
+ * Shift a timestamp forward, but never past the present. Every value this
+ * produces is a record of something that has already happened, so a future
+ * date would be a lie.
+ */
 function offset(base: Date, hours: number, minutes: number): Date {
   const d = new Date(base);
   d.setHours(d.getHours() + hours, d.getMinutes() + minutes);
-  return d;
+  return d.getTime() > Date.now() ? new Date(Date.now() - 60_000) : d;
 }
 
 async function summary(): Promise<void> {
