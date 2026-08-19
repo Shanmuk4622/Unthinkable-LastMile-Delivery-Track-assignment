@@ -1,0 +1,44 @@
+{
+  "name": "swiftroute-lastmile-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SwiftRoute — Last-Mile Delivery Tracker. Zone-aware rate engine, intelligent agent auto-assignment, immutable tracking history and multi-channel notifications.",
+  "license": "MIT",
+  "author": "Shanmukesh Bonala",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shanmuk4622/Unthinkable-LastMile-Delivery-Track-assignment.git"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"API,WEB\" -c \"magenta,cyan\" \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm run dev --workspace server",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspace server && npm run build --workspace web",
+    "build:server": "npm run build --workspace server",
+    "build:web": "npm run build --workspace web",
+    "start": "npm run start --workspace server",
+    "db:generate": "npm run db:generate --workspace server",
+    "db:push": "npm run db:push --workspace server",
+    "db:migrate": "npm run db:migrate --workspace server",
+    "db:seed": "npm run db:seed --workspace server",
+    "db:reset": "npm run db:reset --workspace server",
+    "db:studio": "npm run db:studio --workspace server",
+    "setup": "npm install && npm run db:generate && npm run db:push && npm run db:seed",
+    "test": "npm run test --workspace server",
+    "test:watch": "npm run test:watch --workspace server",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "render-build": "npm install && npm run db:generate && npm run build:server && npm run build:web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
