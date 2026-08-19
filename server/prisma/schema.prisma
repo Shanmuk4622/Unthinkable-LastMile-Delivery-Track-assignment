@@ -1,0 +1,503 @@
+// ============================================================================
+//  SwiftRoute — Last-Mile Delivery Tracker
+//  Prisma schema
+// ----------------------------------------------------------------------------
+//  Portability note
+//  ----------------
+//  The `provider` line below is rewritten at build time by
+//  `scripts/set-db-provider.mjs`, which inspects DATABASE_URL:
+//      file:./dev.db          -> sqlite      (zero-config local development)
+//      postgresql://...       -> postgresql  (production / Render / Supabase)
+//
+//  Because SQLite does not support native ENUM or JSON column types, every
+//  enumerated field is modelled as `String` and validated at the application
+//  boundary by the Zod schemas in `src/validators`, while structured payloads
+//  are stored as JSON-encoded `String`. The canonical list of allowed values
+//  lives in `src/domain/constants.ts` — a single source of truth shared by the
+//  API, the rate engine and the React client.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+//  IDENTITY & ACCESS
+// ---------------------------------------------------------------------------
+
+/// A single account table backs all three personas. `role` drives every
+/// authorisation decision (see src/middleware/authorize.ts).
+/// role : CUSTOMER | AGENT | ADMIN
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  role         String  @default("CUSTOMER")
+  isActive     Boolean @default(true)
+
+  /// Free-form company name — flags accounts that typically place B2B orders.
+  companyName String?
+
+  agentProfile    AgentProfile?
+  addresses       Address[]
+  orders          Order[]             @relation("CustomerOrders")
+  createdOrders   Order[]             @relation("OrderCreator")
+  trackingEvents  TrackingEvent[]
+  notifications   Notification[]
+  reschedules     RescheduleRequest[]
+  assignmentsMade AssignmentHistory[] @relation("AssignedBy")
+  refreshTokens   RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+/// Rotating refresh tokens; storing a hash means a DB leak cannot mint sessions.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Operational state for a delivery agent. Availability + live coordinates are
+/// what the auto-assignment engine scores against.
+/// availability : AVAILABLE | BUSY | OFFLINE | ON_BREAK
+model AgentProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  vehicleType   String  @default("BIKE") // BIKE | SCOOTER | VAN | TRUCK
+  vehicleNumber String?
+
+  /// Home zone. Agents are strongly preferred for pickups inside their own zone.
+  zoneId String?
+
+  availability String @default("OFFLINE")
+
+  /// Last reported GPS fix. Falls back to the home-zone centroid when null.
+  currentLat     Float?
+  currentLng     Float?
+  lastLocationAt DateTime?
+
+  maxConcurrentOrders Int @default(5)
+  activeOrderCount    Int @default(0)
+
+  totalAssigned  Int   @default(0)
+  totalDelivered Int   @default(0)
+  totalFailed    Int   @default(0)
+  ratingAvg      Float @default(5)
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zone        Zone?               @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  orders      Order[]
+  assignments AssignmentHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([availability])
+  @@index([zoneId])
+}
+
+// ---------------------------------------------------------------------------
+//  GEOGRAPHY — ZONES & AREAS
+// ---------------------------------------------------------------------------
+
+/// A pricing / operations region (e.g. "South Bengaluru"). Zones are the unit
+/// the rate cards are written against.
+model Zone {
+  id          String  @id @default(cuid())
+  code        String  @unique // e.g. BLR-S
+  name        String
+  city        String
+  state       String?
+  description String?
+
+  /// Centroid — the fallback location for distance maths when an address or an
+  /// agent has no precise GPS fix.
+  centerLat Float?
+  centerLng Float?
+
+  isActive Boolean @default(true)
+
+  areas         Area[]
+  agents        AgentProfile[]
+  rateCardsFrom RateCard[]     @relation("RateCardFromZone")
+  rateCardsTo   RateCard[]     @relation("RateCardToZone")
+  pickupOrders  Order[]        @relation("PickupZone")
+  dropOrders    Order[]        @relation("DropZone")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+/// The zone-detection lookup table: one row per serviceable pincode.
+/// `pincode` is unique, so detection is a single indexed equality lookup.
+model Area {
+  id      String @id @default(cuid())
+  pincode String @unique
+  name    String
+  city    String
+  state   String?
+  zoneId  String
+
+  /// Area centroid — used to place addresses that arrive without coordinates.
+  lat Float?
+  lng Float?
+
+  isActive Boolean @default(true)
+
+  zone Zone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([zoneId])
+  @@index([city])
+}
+
+/// Snapshot of a pickup or drop location. Orders keep their own copies so that
+/// later edits to a saved address never rewrite delivery history.
+model Address {
+  id           String  @id @default(cuid())
+  userId       String?
+  label        String? // Home | Office | Warehouse ...
+  contactName  String
+  contactPhone String
+  line1        String
+  line2        String?
+  landmark     String?
+  city         String
+  state        String?
+  pincode      String
+  lat          Float?
+  lng          Float?
+
+  /// True for rows saved to a customer address book (reusable),
+  /// false for immutable per-order snapshots.
+  isSaved Boolean @default(false)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  pickupFor Order[] @relation("PickupAddress")
+  dropFor   Order[] @relation("DropAddress")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([pincode])
+}
+
+// ---------------------------------------------------------------------------
+//  PRICING CONFIGURATION  (100% admin-editable — nothing is hardcoded)
+// ---------------------------------------------------------------------------
+
+/// Singleton row (id = "default") holding global pricing knobs.
+model PricingSetting {
+  id String @id @default("default")
+
+  /// Divisor for volumetric weight: (L x B x H) / divisor. Industry standard 5000.
+  volumetricDivisor Float @default(5000)
+
+  /// Chargeable weight is rounded UP to the next multiple of this slab.
+  weightRoundingKg Float @default(0.5)
+
+  /// Floor applied to chargeable weight so tiny parcels still cover handling cost.
+  minChargeableWeightKg Float @default(0.5)
+
+  currency String @default("INR")
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+/// A rate card is looked up by (orderType, scope) with optional zone-pair
+/// targeting. Resolution precedence is documented in docs/RATE_ENGINE.md:
+///   1. exact fromZone + toZone match   (priority 100)
+///   2. scope match INTRA_ZONE / INTER_ZONE (priority 50)
+/// orderType : B2B | B2C          scope : INTRA_ZONE | INTER_ZONE
+model RateCard {
+  id        String @id @default(cuid())
+  name      String
+  orderType String
+  scope     String
+
+  /// Optional lane override. Both null => the card applies to the whole scope.
+  fromZoneId String?
+  toZoneId   String?
+
+  /// Slab pricing: `basePrice` covers everything up to `baseWeightKg`; every
+  /// additional `incrementalWeightKg` (or part thereof) costs `incrementalPrice`.
+  baseWeightKg        Float @default(0.5)
+  basePrice           Float
+  incrementalWeightKg Float @default(0.5)
+  incrementalPrice    Float
+
+  /// Percentage add-ons applied to the freight subtotal.
+  fuelSurchargePct Float @default(0)
+  gstPct           Float @default(0)
+
+  /// Flat handling fee added per shipment.
+  handlingFee Float @default(0)
+
+  /// Higher priority wins when several cards match. Zone-pair cards seed at 100.
+  priority Int @default(50)
+
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  isActive      Boolean   @default(true)
+
+  fromZone Zone?   @relation("RateCardFromZone", fields: [fromZoneId], references: [id], onDelete: Cascade)
+  toZone   Zone?   @relation("RateCardToZone", fields: [toZoneId], references: [id], onDelete: Cascade)
+  orders   Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderType, scope, isActive])
+  @@index([fromZoneId, toZoneId])
+}
+
+/// COD surcharge configured per order type: max(flatFee, pct x declaredValue)
+/// then clamped into [minFee, maxFee].
+/// orderType : B2B | B2C
+model CodRule {
+  id        String @id @default(cuid())
+  orderType String
+
+  flatFee        Float  @default(0)
+  percentOfValue Float  @default(0)
+  minFee         Float  @default(0)
+  maxFee         Float?
+
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  isActive      Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderType, isActive])
+}
+
+// ---------------------------------------------------------------------------
+//  ORDERS
+// ---------------------------------------------------------------------------
+
+/// status : PENDING | CONFIRMED | ASSIGNED | PICKED_UP | IN_TRANSIT |
+///          OUT_FOR_DELIVERY | DELIVERED | FAILED | RESCHEDULED | CANCELLED
+/// orderType : B2B | B2C          paymentType : PREPAID | COD
+model Order {
+  id   String @id @default(cuid())
+  code String @unique // human-friendly AWB, e.g. SR-7K3M9QX2
+
+  customerId  String
+  createdById String
+
+  orderType   String
+  paymentType String
+
+  /// Goods value — the base for percentage COD surcharge.
+  declaredValue Float @default(0)
+
+  pickupAddressId String
+  dropAddressId   String
+  pickupZoneId    String?
+  dropZoneId      String?
+
+  // ---- package ----
+  lengthCm       Float
+  breadthCm      Float
+  heightCm       Float
+  actualWeightKg Float
+
+  // ---- computed weights (persisted for auditability) ----
+  volumetricWeightKg Float
+  chargeableWeightKg Float
+
+  // ---- pricing snapshot ----
+  rateCardId    String?
+  baseCharge    Float  @default(0)
+  weightCharge  Float  @default(0)
+  handlingFee   Float  @default(0)
+  fuelSurcharge Float  @default(0)
+  codSurcharge  Float  @default(0)
+  taxAmount     Float  @default(0)
+  totalCharge   Float  @default(0)
+  currency      String @default("INR")
+
+  /// Full JSON audit trail of how totalCharge was derived (see RateEngine).
+  pricingBreakdown String?
+
+  // ---- lifecycle ----
+  status        String    @default("PENDING")
+  agentId       String?
+  scheduledDate DateTime?
+  pickedUpAt    DateTime?
+  deliveredAt   DateTime?
+  failedAt      DateTime?
+  failureReason String?
+  attemptCount  Int       @default(0)
+  cancelReason  String?
+  notes         String?
+
+  customer      User          @relation("CustomerOrders", fields: [customerId], references: [id])
+  createdBy     User          @relation("OrderCreator", fields: [createdById], references: [id])
+  pickupAddress Address       @relation("PickupAddress", fields: [pickupAddressId], references: [id])
+  dropAddress   Address       @relation("DropAddress", fields: [dropAddressId], references: [id])
+  pickupZone    Zone?         @relation("PickupZone", fields: [pickupZoneId], references: [id])
+  dropZone      Zone?         @relation("DropZone", fields: [dropZoneId], references: [id])
+  rateCard      RateCard?     @relation(fields: [rateCardId], references: [id])
+  agent         AgentProfile? @relation(fields: [agentId], references: [id])
+
+  trackingEvents TrackingEvent[]
+  assignments    AssignmentHistory[]
+  reschedules    RescheduleRequest[]
+  notifications  Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([customerId])
+  @@index([agentId])
+  @@index([pickupZoneId])
+  @@index([dropZoneId])
+  @@index([createdAt])
+}
+
+/// APPEND-ONLY. There is no update or delete route anywhere in the API for this
+/// table — every status transition writes exactly one row, forever.
+model TrackingEvent {
+  id      String @id @default(cuid())
+  orderId String
+
+  fromStatus String?
+  toStatus   String
+
+  actorId   String?
+  actorRole String // CUSTOMER | AGENT | ADMIN | SYSTEM
+  actorName String
+
+  title String
+  notes String?
+
+  lat Float?
+  lng Float?
+
+  /// JSON blob for transition-specific context (failure code, old agent, ...).
+  metadata String?
+
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([toStatus])
+}
+
+/// Every assignment and re-assignment, with the score that justified it.
+/// mode : AUTO | MANUAL | REASSIGN
+model AssignmentHistory {
+  id      String @id @default(cuid())
+  orderId String
+  agentId String
+
+  assignedById String?
+  mode         String
+  reason       String?
+
+  /// Explainability for the auto-assigner.
+  distanceKm        Float?
+  score             Float?
+  candidateSnapshot String? // JSON: the ranked shortlist at decision time
+
+  unassignedAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  agent      AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  assignedBy User?        @relation("AssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([agentId])
+}
+
+/// Captured when a customer reschedules after a failed attempt.
+model RescheduleRequest {
+  id      String @id @default(cuid())
+  orderId String
+
+  requestedById String
+  previousDate  DateTime?
+  newDate       DateTime
+  reason        String?
+  attemptNumber Int       @default(1)
+
+  createdAt DateTime @default(now())
+
+  order       Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  requestedBy User  @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+// ---------------------------------------------------------------------------
+//  NOTIFICATIONS
+// ---------------------------------------------------------------------------
+
+/// Outbox pattern. Rows are written synchronously with the status change and
+/// dispatched by the notification service; when no provider credentials are
+/// configured the row is still persisted with provider = "CONSOLE", so the
+/// demo works end-to-end without any secrets.
+/// channel : EMAIL | SMS      status : QUEUED | SENT | FAILED | SKIPPED
+model Notification {
+  id      String  @id @default(cuid())
+  orderId String?
+  userId  String?
+
+  channel   String
+  recipient String
+  subject   String?
+  body      String
+  html      String?
+
+  status            String    @default("QUEUED")
+  provider          String?
+  providerMessageId String?
+  error             String?
+  attempts          Int       @default(0)
+  sentAt            DateTime?
+
+  createdAt DateTime @default(now())
+
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([orderId])
+  @@index([status])
+}

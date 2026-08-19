@@ -1,0 +1,61 @@
+{
+  "name": "@swiftroute/server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SwiftRoute backend — Express + Prisma REST API with rate engine, auto-assignment and notification outbox.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "node scripts/set-db-provider.mjs && prisma generate && tsc -p tsconfig.json",
+    "start": "node scripts/set-db-provider.mjs && node dist/bootstrap.js",
+    "db:provider": "node scripts/set-db-provider.mjs",
+    "db:generate": "node scripts/set-db-provider.mjs && prisma generate",
+    "db:push": "node scripts/set-db-provider.mjs && prisma db push --skip-generate",
+    "db:migrate": "node scripts/set-db-provider.mjs && prisma migrate dev",
+    "db:deploy": "node scripts/set-db-provider.mjs && prisma migrate deploy",
+    "db:reset": "node scripts/set-db-provider.mjs && prisma db push --force-reset --skip-generate && npm run db:seed",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.5",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.16",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.10.2",
+    "@types/nodemailer": "^6.4.17",
+    "@types/supertest": "^6.0.2",
+    "prisma": "^5.22.0",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
