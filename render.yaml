@@ -1,0 +1,117 @@
+# =============================================================================
+#  SwiftRoute — Render blueprint
+# -----------------------------------------------------------------------------
+#  One web service and one PostgreSQL database. The service builds BOTH
+#  workspaces and serves the React bundle from the same Express process, so the
+#  whole product runs on a single free-tier instance with no CORS and no second
+#  cold start.
+#
+#  Deploy:
+#    1. Push this repo to GitHub.
+#    2. Render dashboard -> New -> Blueprint -> pick the repo.
+#    3. Render provisions the database, wires DATABASE_URL, and runs the build.
+#    4. On first boot the app applies the schema and seeds the demo data
+#       (see server/src/bootstrap.ts).
+#
+#  After the first deploy, set WEB_PUBLIC_URL and API_PUBLIC_URL to the real
+#  service URL so the tracking links inside notification e-mails resolve.
+# =============================================================================
+
+databases:
+  - name: swiftroute-db
+    databaseName: swiftroute
+    user: swiftroute
+    plan: free
+
+services:
+  - type: web
+    name: swiftroute
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+
+    healthCheckPath: /api/health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Render injects PORT; the app reads it via config/env.ts.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: swiftroute-db
+          property: connectionString
+
+      # Generated once by Render and then held stable across deploys.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+
+      - key: JWT_EXPIRES_IN
+        value: 2h
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      - key: BCRYPT_ROUNDS
+        value: "10"
+
+      # Apply the schema and seed on first boot. Set to "false" once you manage
+      # migrations yourself.
+      - key: BOOTSTRAP_DB
+        value: "true"
+
+      # ---- change these before sharing the URL publicly ----
+      - key: SEED_ADMIN_EMAIL
+        value: admin@swiftroute.dev
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_DEMO_PASSWORD
+        sync: false
+      - key: SEED_DEMO_ORDERS
+        value: "true"
+
+      # ---- notifications: console keeps everything in the in-app outbox ----
+      - key: NOTIFY_EMAIL_PROVIDER
+        value: console
+      - key: NOTIFY_SMS_PROVIDER
+        value: console
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: SwiftRoute
+      - key: MAIL_FROM_ADDRESS
+        value: no-reply@swiftroute.dev
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_NUMBER
+        sync: false
+
+      # ---- dispatch tuning ----
+      - key: ASSIGN_MAX_DISTANCE_KM
+        value: "25"
+      - key: ASSIGN_WEIGHT_DISTANCE
+        value: "0.50"
+      - key: ASSIGN_WEIGHT_ZONE_MATCH
+        value: "0.25"
+      - key: ASSIGN_WEIGHT_WORKLOAD
+        value: "0.15"
+      - key: ASSIGN_WEIGHT_PERFORMANCE
+        value: "0.10"
+
+      # ---- set these to the live service URL after the first deploy ----
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: WEB_PUBLIC_URL
+        sync: false

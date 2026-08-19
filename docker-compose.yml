@@ -1,0 +1,57 @@
+# =============================================================================
+#  SwiftRoute — local production-like stack
+#
+#    docker compose up --build
+#    -> http://localhost:4000
+#
+#  Runs the app against PostgreSQL, which is the closest thing to the hosted
+#  deployment you can get on a laptop. For plain local development use
+#  `npm run dev` instead: SQLite, hot reload, no containers.
+# =============================================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: swiftroute
+      POSTGRES_PASSWORD: swiftroute
+      POSTGRES_DB: swiftroute
+    ports:
+      - '5432:5432'
+    volumes:
+      - swiftroute-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U swiftroute -d swiftroute']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://swiftroute:swiftroute@db:5432/swiftroute
+      API_PUBLIC_URL: http://localhost:4000
+      WEB_PUBLIC_URL: http://localhost:4000
+
+      # Applies the schema and seeds the demo data on first boot.
+      BOOTSTRAP_DB: 'true'
+      SEED_DEMO_ORDERS: 'true'
+
+      # Development-only secrets. Replace for anything reachable from outside.
+      JWT_SECRET: local-compose-access-secret-not-for-production
+      JWT_REFRESH_SECRET: local-compose-refresh-secret-not-for-production
+
+      NOTIFY_EMAIL_PROVIDER: console
+      NOTIFY_SMS_PROVIDER: console
+    ports:
+      - '4000:4000'
+
+volumes:
+  swiftroute-db:
