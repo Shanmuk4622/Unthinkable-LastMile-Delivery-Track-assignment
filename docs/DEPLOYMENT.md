@@ -54,6 +54,8 @@ Free tier, managed PostgreSQL, and the repo ships a blueprint.
 
 ### One-click
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Shanmuk4622/Unthinkable-LastMile-Delivery-Track-assignment)
+
 1. Push this repo to GitHub.
 2. Render dashboard → **New** → **Blueprint** → select the repo.
 3. Render reads [`render.yaml`](../render.yaml) and provisions:

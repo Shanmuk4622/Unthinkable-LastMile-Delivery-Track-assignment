@@ -16,6 +16,10 @@
 
 [Quick start](#-quick-start) · [Rate engine](#-the-rate-calculation-engine) · [Dispatch](#-the-auto-assignment-engine) · [API](docs/API.md) · [System design](docs/SYSTEM_DESIGN.md)
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Shanmuk4622/Unthinkable-LastMile-Delivery-Track-assignment)
+
+<sub>One click provisions PostgreSQL, generates the JWT secrets, builds both workspaces and seeds the demo data.</sub>
+
 </div>
 
 ---
@@ -1117,8 +1121,10 @@ flowchart LR
 
 ### Render (recommended — free tier)
 
-The repo ships a [`render.yaml`](render.yaml) blueprint. **New → Blueprint →
-pick this repo.** Render provisions PostgreSQL, wires `DATABASE_URL`, generates
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Shanmuk4622/Unthinkable-LastMile-Delivery-Track-assignment)
+
+The repo ships a [`render.yaml`](render.yaml) blueprint. Use the button above, or
+**New → Blueprint → pick this repo.** Render provisions PostgreSQL, wires `DATABASE_URL`, generates
 the JWT secrets, builds both workspaces and starts the service. On first boot
 the app applies the schema and seeds itself.
 
