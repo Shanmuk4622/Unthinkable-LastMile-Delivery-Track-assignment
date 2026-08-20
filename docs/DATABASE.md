@@ -73,7 +73,7 @@ erDiagram
 
     AGENT_PROFILE {
         string   id PK
-        string   userId FK UK
+        string   userId FK,UK
         string   vehicleType "BIKE|SCOOTER|VAN|TRUCK"
         string   vehicleNumber
         string   zoneId FK
