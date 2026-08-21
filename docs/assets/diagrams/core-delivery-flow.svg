@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 470" role="img" aria-labelledby="title desc">
+  <title id="title">SwiftRoute core delivery flow</title>
+  <desc id="desc">Order input flows through zone detection, pricing, confirmation, assignment, delivery, tracking, notifications, and failed-delivery recovery.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#faf5ff"/><stop offset="0.5" stop-color="#f0f9ff"/><stop offset="1" stop-color="#ecfdf5"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#334155" flood-opacity=".12"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+    <style>
+      .title{font:700 27px Inter,Segoe UI,sans-serif;fill:#0f172a}.sub{font:500 14px Inter,Segoe UI,sans-serif;fill:#64748b}
+      .label{font:700 15px Inter,Segoe UI,sans-serif;fill:#0f172a;text-anchor:middle}.small{font:500 12px Inter,Segoe UI,sans-serif;fill:#475569;text-anchor:middle}
+      .step{font:700 11px Inter,Segoe UI,sans-serif;letter-spacing:1px;text-anchor:middle}.line{fill:none;stroke:#64748b;stroke-width:2.5;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1440" height="470" rx="28" fill="url(#bg)"/>
+  <text x="60" y="54" class="title">One order, one explainable journey</text>
+  <text x="60" y="79" class="sub">Pricing, dispatch, custody, communication, and recovery remain traceable from end to end.</text>
+
+  <path class="line" d="M240 174H270"/><path class="line" d="M450 174H480"/><path class="line" d="M660 174H690"/>
+  <path class="line" d="M870 174H900"/><path class="line" d="M1080 174H1110"/>
+
+  <g filter="url(#shadow)"><rect x="60" y="118" width="180" height="112" rx="18" fill="#fff" stroke="#c4b5fd" stroke-width="2"/></g>
+  <circle cx="150" cy="140" r="16" fill="#ede9fe"/><text x="150" y="144" class="step" fill="#7c3aed">01</text>
+  <text x="150" y="174" class="label">Shipment input</text><text x="150" y="198" class="small">addresses · parcel</text><text x="150" y="216" class="small">B2B/B2C · payment</text>
+
+  <g filter="url(#shadow)"><rect x="270" y="118" width="180" height="112" rx="18" fill="#fff" stroke="#7dd3fc" stroke-width="2"/></g>
+  <circle cx="360" cy="140" r="16" fill="#e0f2fe"/><text x="360" y="144" class="step" fill="#0284c7">02</text>
+  <text x="360" y="174" class="label">Detect zones</text><text x="360" y="198" class="small">pincode → area → zone</text><text x="360" y="216" class="small">intra / inter lane</text>
+
+  <g filter="url(#shadow)"><rect x="480" y="118" width="180" height="112" rx="18" fill="#fff" stroke="#f0abfc" stroke-width="2"/></g>
+  <circle cx="570" cy="140" r="16" fill="#fae8ff"/><text x="570" y="144" class="step" fill="#c026d3">03</text>
+  <text x="570" y="174" class="label">Calculate quote</text><text x="570" y="198" class="small">weight · card · COD · GST</text><text x="570" y="216" class="small">line-by-line arithmetic</text>
+
+  <g filter="url(#shadow)"><rect x="690" y="118" width="180" height="112" rx="18" fill="#fff" stroke="#a7f3d0" stroke-width="2"/></g>
+  <circle cx="780" cy="140" r="16" fill="#dcfce7"/><text x="780" y="144" class="step" fill="#16a34a">04</text>
+  <text x="780" y="174" class="label">Confirm &amp; freeze</text><text x="780" y="198" class="small">server recomputes</text><text x="780" y="216" class="small">immutable price snapshot</text>
+
+  <g filter="url(#shadow)"><rect x="900" y="118" width="180" height="112" rx="18" fill="#fff" stroke="#fde68a" stroke-width="2"/></g>
+  <circle cx="990" cy="140" r="16" fill="#fef3c7"/><text x="990" y="144" class="step" fill="#d97706">05</text>
+  <text x="990" y="174" class="label">Smart dispatch</text><text x="990" y="198" class="small">eligibility + four signals</text><text x="990" y="216" class="small">ranked audit snapshot</text>
+
+  <g filter="url(#shadow)"><rect x="1110" y="118" width="270" height="112" rx="18" fill="url(#brand)"/></g>
+  <circle cx="1245" cy="140" r="16" fill="#fff" fill-opacity=".2"/><text x="1245" y="144" class="step" fill="#fff">06</text>
+  <text x="1245" y="174" class="label" fill="#fff">Agent delivery lifecycle</text><text x="1245" y="198" class="small" fill="#e0f2fe">pickup → transit → doorstep</text><text x="1245" y="216" class="small" fill="#e0f2fe">delivered or failed</text>
+
+  <path class="line" d="M1245 230V276H1080"/><path class="line" d="M1245 230V276H1310"/>
+  <g filter="url(#shadow)"><rect x="900" y="294" width="250" height="102" rx="18" fill="#fff" stroke="#93c5fd" stroke-width="2"/></g>
+  <text x="1025" y="329" class="label">Immutable timeline</text><text x="1025" y="353" class="small">actor · timestamp · reason</text><text x="1025" y="373" class="small">email and SMS outbox</text>
+  <g filter="url(#shadow)"><rect x="1180" y="294" width="200" height="102" rx="18" fill="#fff" stroke="#fda4af" stroke-width="2"/></g>
+  <text x="1280" y="329" class="label">Failed attempt?</text><text x="1280" y="353" class="small">notify + reschedule</text><text x="1280" y="373" class="small">exclude failed agent</text>
+  <path class="line" d="M1180 345H1153"/><path d="M1180 382H990V233" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+  <text x="1065" y="421" class="small" fill="#be123c">retry returns to dispatch with a fresh eligible agent</text>
+</svg>

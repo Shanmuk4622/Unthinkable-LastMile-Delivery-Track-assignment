@@ -107,24 +107,7 @@ declared value, and charges.
 
 ## Core delivery flow
 
-```mermaid
-flowchart LR
-    A[Addresses + parcel + order/payment type] --> B[Pincode zone detection]
-    B --> C[Rate-card resolution]
-    C --> D[Explainable quote]
-    D -->|customer confirms| E[Server recomputes and freezes price]
-    E --> F[Manual or intelligent assignment]
-    F --> G[Agent status lifecycle]
-    G --> H[Immutable tracking event]
-    H --> I[Email/SMS outbox]
-    G -->|failed| J[Customer reschedules]
-    J -->|exclude failed agent| F
-
-    style D fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
-    style F fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
-    style H fill:#fef3c7,stroke:#d97706,color:#78350f
-    style J fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
-```
+![Core delivery workflow](docs/assets/diagrams/core-delivery-flow.svg)
 
 ## The engineering that matters
 
@@ -169,20 +152,7 @@ See [AUTO_ASSIGNMENT.md](docs/AUTO_ASSIGNMENT.md).
 
 ### 3. Lifecycle and failed-delivery recovery
 
-```mermaid
-stateDiagram-v2
-    [*] --> PENDING
-    PENDING --> CONFIRMED
-    CONFIRMED --> ASSIGNED
-    ASSIGNED --> PICKED_UP
-    PICKED_UP --> IN_TRANSIT
-    IN_TRANSIT --> OUT_FOR_DELIVERY
-    OUT_FOR_DELIVERY --> DELIVERED
-    OUT_FOR_DELIVERY --> FAILED
-    FAILED --> RESCHEDULED
-    RESCHEDULED --> ASSIGNED: different eligible agent
-    DELIVERED --> [*]
-```
+![Order status lifecycle](docs/assets/diagrams/status-lifecycle.svg)
 
 Every transition updates the order, appends its tracking event, adjusts agent
 capacity, and closes assignment custody in one database transaction. A failure
@@ -202,21 +172,7 @@ See [NOTIFICATIONS.md](docs/NOTIFICATIONS.md) and the
 
 ## Architecture
 
-```mermaid
-flowchart TB
-    UI[React + Vite + TanStack Query] -->|same-origin /api| API[Express REST API]
-    API --> MW[JWT auth · role guards · Zod validation]
-    MW --> SVC[Order · pricing · assignment · tracking services]
-    SVC --> DB[(Prisma: SQLite local / PostgreSQL hosted)]
-    SVC --> OUT[(Notification outbox)]
-    OUT --> MAIL[Console / SMTP]
-    OUT --> SMS[Console / Twilio]
-    API --> STATIC[Production React bundle]
-
-    style UI fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
-    style SVC fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
-    style DB fill:#dcfce7,stroke:#16a34a,color:#14532d
-```
+![SwiftRoute architecture](docs/assets/diagrams/architecture.svg)
 
 The production build is one service: Vite writes the client into
 `server/public`, and Express serves both the API and SPA. This removes CORS and
