@@ -31,7 +31,10 @@ services:
     region: singapore
     branch: main
 
-    buildCommand: npm ci && npm run build
+    # NODE_ENV is production during Render builds. npm would therefore omit
+    # devDependencies by default, but TypeScript, Vite, Prisma CLI and @types
+    # are build-time tools and must be present until the bundle is compiled.
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
 
     healthCheckPath: /api/health

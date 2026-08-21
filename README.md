@@ -1126,7 +1126,10 @@ flowchart LR
 The repo ships a [`render.yaml`](render.yaml) blueprint. Use the button above, or
 **New → Blueprint → pick this repo.** Render provisions PostgreSQL, wires `DATABASE_URL`, generates
 the JWT secrets, builds both workspaces and starts the service. On first boot
-the app applies the schema and seeds itself.
+the app applies the schema and seeds itself. The Blueprint deliberately runs
+`npm ci --include=dev` because Render sets `NODE_ENV=production` during the
+build, while TypeScript, Vite, Prisma CLI and the Node type definitions are
+still required to compile the production bundle.
 
 Afterwards set `API_PUBLIC_URL` and `WEB_PUBLIC_URL` to the live service URL so
 the tracking links inside notification e-mails resolve.
@@ -1142,7 +1145,7 @@ docker compose up --build     # app + PostgreSQL → http://localhost:4000
 Any host that runs Node 20 and gives you a `PORT`:
 
 ```bash
-npm ci && npm run build && npm start
+npm ci --include=dev && npm run build && npm start
 ```
 
 > **Free-tier note:** free instances sleep after inactivity, so the very first

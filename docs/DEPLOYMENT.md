@@ -24,7 +24,7 @@
 
 ```mermaid
 flowchart TD
-    A["npm ci"] --> B["npm run build"]
+    A["npm ci --include=dev"] --> B["npm run build"]
     B --> C["server: prisma generate → tsc<br/>→ server/dist"]
     B --> D["web: tsc --noEmit → vite build<br/>→ server/public"]
     C & D --> E["npm start<br/>node server/dist/bootstrap.js"]
@@ -62,7 +62,10 @@ Free tier, managed PostgreSQL, and the repo ships a blueprint.
    - a **PostgreSQL** instance (`swiftroute-db`),
    - a **web service** with `DATABASE_URL` already wired,
    - generated values for `JWT_SECRET` and `JWT_REFRESH_SECRET`.
-4. It runs `npm ci && npm run build`, then `npm start`.
+4. It runs `npm ci --include=dev && npm run build`, then `npm start`. The
+   explicit `--include=dev` is required because Render builds with
+   `NODE_ENV=production`, while TypeScript, Vite, Prisma CLI and the Node type
+   definitions are build-time development dependencies.
 5. On first boot the app applies the schema and seeds the demo data.
 
 ### Then set two variables
@@ -87,7 +90,7 @@ Both point at the same host, because it *is* the same service.
 | Field | Value |
 |---|---|
 | Environment | Node |
-| Build command | `npm ci && npm run build` |
+| Build command | `npm ci --include=dev && npm run build` |
 | Start command | `npm start` |
 | Health check path | `/api/health` |
 
@@ -136,7 +139,7 @@ uses `tini` so `SIGTERM` reaches the graceful shutdown in
 2. Add a **PostgreSQL** plugin — Railway injects `DATABASE_URL` automatically.
 3. Set the build and start commands:
    ```
-   Build:  npm ci && npm run build
+   Build:  npm ci --include=dev && npm run build
    Start:  npm start
    ```
 4. Add `JWT_SECRET` and `JWT_REFRESH_SECRET`.
