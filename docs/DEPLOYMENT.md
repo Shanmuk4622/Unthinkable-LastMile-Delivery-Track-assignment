@@ -3,6 +3,10 @@
 > The API also serves the built React bundle, so **the whole product deploys as
 > a single service** — one URL, no CORS, one cold start.
 
+**Current hosted application:**
+[https://swiftroute-am6m.onrender.com](https://swiftroute-am6m.onrender.com) ·
+[health check](https://swiftroute-am6m.onrender.com/api/health)
+
 ---
 
 ## Contents
@@ -68,17 +72,24 @@ Free tier, managed PostgreSQL, and the repo ships a blueprint.
    definitions are build-time development dependencies.
 5. On first boot the app applies the schema and seeds the demo data.
 
-### Then set two variables
+### Then set the public URL variables
 
 Once the service has a URL, set these so the tracking links inside notification
 e-mails resolve:
 
 ```
-API_PUBLIC_URL = https://swiftroute.onrender.com
-WEB_PUBLIC_URL = https://swiftroute.onrender.com
+API_PUBLIC_URL = https://your-service-name.onrender.com
+WEB_PUBLIC_URL = https://your-service-name.onrender.com
 ```
 
-Both point at the same host, because it *is* the same service.
+Replace `your-service-name` with the exact URL shown on the web service page.
+Both values point at the same host because the API serves the React build.
+
+For the checked-in hosted demo, both values are:
+
+```text
+https://swiftroute-am6m.onrender.com
+```
 
 ### And change the seed credentials
 
@@ -235,7 +246,7 @@ in-app outbox without sending anything. To go live:
 ```env
 NOTIFY_EMAIL_PROVIDER=smtp
 SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
+SMTP_PORT=2525
 SMTP_SECURE=false
 SMTP_USER=your-login@smtp-brevo.com
 SMTP_PASS=your-smtp-key
@@ -243,14 +254,20 @@ MAIL_FROM_NAME=SwiftRoute
 MAIL_FROM_ADDRESS=no-reply@yourdomain.dev
 ```
 
+Render free web services block outbound ports `25`, `465`, and `587`, so use
+Brevo's supported `2525` fallback here. This restriction is documented in
+[Render's free-tier limits](https://render.com/docs/free), and Brevo documents
+`2525` as the alternative when `587` is blocked in
+[its SMTP-port guide](https://help.brevo.com/hc/en-us/articles/10905415650322-Which-SMTP-port-should-I-use-Port-587-465-or-2525).
+
 <details>
 <summary>Other free options</summary>
 
 | Provider | Host | Port | Notes |
 |---|---|---:|---|
-| **Mailtrap** (sandbox) | `sandbox.smtp.mailtrap.io` | 2525 | Captures everything — ideal for a demo |
-| **Gmail** | `smtp.gmail.com` | 587 | Requires an App Password, not your account password |
-| **Resend** | `smtp.resend.com` | 587 | 3,000/month free |
+| **Mailtrap** (sandbox) | `sandbox.smtp.mailtrap.io` | 2525 | Captures everything — ideal for a Render demo |
+| **Gmail** | `smtp.gmail.com` | 587 | Not reachable from Render free; requires an App Password elsewhere |
+| **Resend** | `smtp.resend.com` | 587 | Not reachable from Render free; use its HTTPS API or another host |
 
 </details>
 
@@ -284,17 +301,28 @@ TWILIO_FROM_NUMBER=+15005550006
 - [ ] Checked the notification outbox renders a message
 - [ ] Considered `SEED_DEMO_ORDERS=false` if you do not want sample data
 - [ ] Considered `BOOTSTRAP_DB=false` + `npm run db:deploy` for a real migration history
+- [ ] Planned for the free PostgreSQL database's 30-day expiry (upgrade or export before then)
 
 ---
 
 ## Troubleshooting
 
 <details>
-<summary><b>The first request takes 30 seconds</b></summary>
+<summary><b>The first request takes about a minute</b></summary>
 
-Free instances sleep after inactivity. The first request wakes the container.
-`GET /api/health` is the cheapest way to warm it; an external uptime pinger
-every 10 minutes keeps it awake.
+Render free web services spin down after 15 minutes without inbound traffic and
+can take about one minute to wake. The browser displays a loading page while
+that happens. `GET /api/health` is the cheapest manual warm-up request.
+</details>
+
+<details>
+<summary><b>What happens to the free PostgreSQL database after 30 days?</b></summary>
+
+Render's free PostgreSQL databases expire 30 days after creation and then enter
+a 14-day grace period before deletion. For an assignment demo, create a fresh
+free database and redeploy if it expires; for durable production use, upgrade
+or export the data before expiry. See
+[Render's current free database limits](https://render.com/docs/free#free-postgres).
 </details>
 
 <details>

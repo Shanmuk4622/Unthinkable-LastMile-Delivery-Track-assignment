@@ -143,6 +143,11 @@ flowchart TD
 Any SMTP server. Free options that work out of the box are listed in
 [DEPLOYMENT.md](DEPLOYMENT.md#wiring-real-notifications).
 
+> **Render free-tier note:** use a provider that supports port `2525` (Brevo
+> and Mailtrap do). Render free web services block outbound SMTP ports `25`,
+> `465`, and `587`; the checked-in Render blueprint therefore defaults to
+> `2525`.
+
 The transporter is created lazily and cached. If `NOTIFY_EMAIL_PROVIDER=smtp`
 but `SMTP_HOST` is empty, the service **logs a warning and falls back to
 console** rather than throwing — a misconfiguration should degrade, not take the

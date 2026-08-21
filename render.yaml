@@ -88,7 +88,9 @@ services:
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
-        value: "587"
+        # Render free web services block the standard SMTP ports. Brevo and
+        # Mailtrap both support 2525 as the submission-port fallback.
+        value: "2525"
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
