@@ -22,6 +22,9 @@ databases:
     databaseName: swiftroute
     user: swiftroute
     plan: free
+    # Keep PostgreSQL beside the web service so private database traffic does
+    # not cross regions. Render defaults databases to Oregon when omitted.
+    region: singapore
 
 services:
   - type: web
