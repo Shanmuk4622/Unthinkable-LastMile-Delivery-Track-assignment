@@ -1,6 +1,7 @@
 # 📡 API Reference
 
-> Base URL — local: `http://localhost:4000/api` · production: `https://<your-service>/api`
+> Base URL — local: `http://localhost:4000/api` · hosted demo:
+> `https://swiftroute-am6m.onrender.com/api`
 > · Source: [`server/src/routes/`](../server/src/routes/)
 
 ---

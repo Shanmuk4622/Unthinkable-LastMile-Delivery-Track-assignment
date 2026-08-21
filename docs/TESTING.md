@@ -9,10 +9,11 @@
 
 1. [Running the suite](#running-the-suite)
 2. [What is covered](#what-is-covered)
-3. [Why the split](#why-the-split)
-4. [Manual walkthrough — curl](#manual-walkthrough--curl)
-5. [Manual walkthrough — the UI](#manual-walkthrough--the-ui)
-6. [Adding a test](#adding-a-test)
+3. [Live browser acceptance](#live-browser-acceptance)
+4. [Why the split](#why-the-split)
+5. [Manual walkthrough — curl](#manual-walkthrough--curl)
+6. [Manual walkthrough — the UI](#manual-walkthrough--the-ui)
+7. [Adding a test](#adding-a-test)
 
 ---
 
@@ -94,6 +95,24 @@ Drives the real Express app in-process with supertest.
 | Rate engine | The full worked example (`₹223.49`), lane-override selection, `ZONE_NOT_SERVICEABLE`, dimension validation |
 | Public tracking | 404 on an unknown code, and ⭐ **redaction** — no `line1`, no `contactPhone`, no `totalCharge`, first name only |
 | Serviceability | A mapped pincode names its zone; an unmapped one returns `200 serviceable:false`, not an error |
+
+---
+
+## Live browser acceptance
+
+The hosted Render build was also exercised through the real UI after deployment.
+This pass created disposable demo orders and verified the following outcomes:
+
+| Surface | Checks performed |
+|---|---|
+| Public | Landing page, sign-in/register errors, unknown and valid tracking codes, redaction, SPA deep-link refreshes |
+| Customer | Dashboard, lists/details, notification centre, live B2C/COD quote, order confirmation, failed-attempt reschedule |
+| Agent | Active queue, picked up, in transit, out for delivery, delivered, mandatory failure reason, capacity release |
+| Admin | Dashboard plus every admin route, search/filter, assignment ranking, manual assignment, override dialog |
+| Recovery | Failed attempt notified the customer; reschedule excluded the failed agent and assigned a different eligible agent |
+| API | Healthy PostgreSQL response, public health endpoint, unauthenticated `401`, protected role scoping |
+
+Representative captures are embedded in the [project README](../README.md#product-tour).
 
 ---
 

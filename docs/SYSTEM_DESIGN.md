@@ -1,26 +1,21 @@
 # SwiftRoute — System Design
 
-> Deliverable 4 of the brief. **Word count: 795** (excluding headings and the
-> diagram). Covers the rate calculation engine, zone detection, auto-assignment
-> logic and failed-delivery handling.
+> Deliverable 4 of the brief. Under 800 words, covering the rate engine, zone
+> detection, auto-assignment and failed-delivery handling.
 
 ---
 
 ## Rate calculation engine
 
 The engine is a pure function of *(shipment input) × (admin configuration)*.
-Three tables hold every number it reads — `PricingSetting` (a singleton holding
-the volumetric divisor, slab size and minimum weight), `RateCard` and `CodRule` —
-so there is no constant anywhere in the pricing path. An operator changes a
-divisor in the UI and the very next quote reflects it.
+`PricingSetting`, `RateCard` and `CodRule` hold every business number, so there
+are no pricing constants. An operator's change affects the next quote.
 
 Pricing runs in eight steps. Zone detection resolves both legs and yields a
 scope of `INTRA_ZONE` or `INTER_ZONE`. Volumetric weight is `(L × B × H) ÷
-divisor`, defaulting to the courier-standard 5000. Chargeable weight is the
-greater of actual and volumetric — a van's scarce resources are payload and
-space, and billing only on the scale lets a cubic metre of polystyrene travel
-free while stealing twenty parcels' worth of space — then floored and rounded
-**up** to the next slab. Rate-card resolution matches on
+divisor`, defaulting to 5000. Chargeable weight is the greater of actual and
+volumetric, then floored and rounded **up** to the next slab. Rate-card
+resolution matches on
 `(orderType, scope)`, with a card naming this exact zone pair taking precedence
 over the generic one and `priority` breaking further ties. Freight is
 `basePrice + ⌈(chargeable − baseWeight) ÷ slab⌉ × slabPrice`. A flat handling
@@ -46,10 +41,9 @@ editing a card tomorrow cannot restate yesterday's invoice.
 
 Detection is a serviceability question, and SwiftRoute answers it the way real
 3PL networks do: a `pincode → Area → Zone` lookup table that operations staff
-own. `Area.pincode` is `UNIQUE`, so detection is a single indexed equality
-lookup rather than a point-in-polygon test, and the identical code runs on
-SQLite and PostgreSQL without a spatial extension. Onboarding a locality is a
-dropdown, not a GIS task. Coordinates are still carried on every area and zone,
+own. `Area.pincode` is `UNIQUE`, so detection is one indexed equality lookup,
+identical on SQLite and PostgreSQL. Onboarding a locality is a dropdown, not a
+GIS task. Coordinates are still carried on every area and zone,
 but only as fallback positions for the distance maths, never for detection. An
 unmapped pincode fails with an actionable `ZONE_NOT_SERVICEABLE` rather than
 guessing. A pincode straddling two zones would need a sub-area rule; the

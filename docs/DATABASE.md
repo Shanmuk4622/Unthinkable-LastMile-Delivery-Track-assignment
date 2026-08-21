@@ -4,7 +4,7 @@
 > · Seed: [`server/src/seed/`](../server/src/seed/)
 > · Browse it: `npm run db:studio`
 
-13 tables. This document explains what each holds, why it is shaped that way,
+14 models. This document explains what each holds, why it is shaped that way,
 and the constraints that make the guarantees in the README true.
 
 ---
