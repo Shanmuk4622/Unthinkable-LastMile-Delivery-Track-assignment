@@ -11,10 +11,10 @@ delivery agents, and operations teams.
 [![API Health](https://img.shields.io/badge/API-Health_Check-0ea5e9?style=for-the-badge)](https://swiftroute-am6m.onrender.com/api/health)
 [![Tests](https://img.shields.io/badge/tests-88_passing-10b981?style=for-the-badge)](docs/TESTING.md)
 
-[Deploy your own copy](https://render.com/deploy?repo=https://github.com/Shanmuk4622/Unthinkable-LastMile-Delivery-Track-assignment)
+[Open the live website](https://swiftroute-am6m.onrender.com)
+· [Watch the video walkthrough](https://youtu.be/oiaITGVpbYY)
 · [API contract](docs/API.md)
 · [System design](docs/SYSTEM_DESIGN.md)
-· [Deployment guide](docs/DEPLOYMENT.md)
 
 </div>
 
@@ -25,17 +25,29 @@ delivery agents, and operations teams.
 
 ## Try the live product
 
-The sign-in screen has one-click demo selectors, or use these credentials:
+### [Open SwiftRoute Live →](https://swiftroute-am6m.onrender.com)
 
-| Persona | E-mail | Password | Best place to start |
+**Live application:** [https://swiftroute-am6m.onrender.com](https://swiftroute-am6m.onrender.com)
+
+The deployed website is fully interactive and connected to PostgreSQL. The
+sign-in screen has one-click demo selectors, or use these credentials:
+
+| Persona | E-mail | Password | Live workspace |
 |---|---|---|---|
-| Operations admin | `admin@swiftroute.dev` | `Admin@123` | `/admin` |
-| Customer | `customer@swiftroute.dev` | `Demo@123` | `/app` |
-| Delivery agent | `agent@swiftroute.dev` | `Demo@123` | `/agent` |
+| Operations admin | `admin@swiftroute.dev` | `Admin@123` | [Open admin](https://swiftroute-am6m.onrender.com/admin) |
+| Customer | `customer@swiftroute.dev` | `Demo@123` | [Open customer](https://swiftroute-am6m.onrender.com/app) |
+| Delivery agent | `agent@swiftroute.dev` | `Demo@123` | [Open agent](https://swiftroute-am6m.onrender.com/agent) |
+
+### Video walkthrough
+
+[![Watch the SwiftRoute website walkthrough](https://img.youtube.com/vi/oiaITGVpbYY/hqdefault.jpg)](https://youtu.be/oiaITGVpbYY)
+
+**[Watch the complete SwiftRoute demonstration on YouTube →](https://youtu.be/oiaITGVpbYY)**
 
 ### Five-minute evaluator walkthrough
 
-1. Sign in as **Customer** and choose **Book a pickup**.
+1. Open the [live SwiftRoute website](https://swiftroute-am6m.onrender.com),
+   sign in as **Customer**, and choose **Book a pickup**.
 2. Use pickup pincode `560034`, drop pincode `560001`, package
    `30 × 20 × 15 cm`, and actual weight `1.2 kg`.
 3. Choose **B2C + COD** and declared value `₹1,500`. The live quote should show
@@ -191,49 +203,10 @@ More detail: [ARCHITECTURE.md](docs/ARCHITECTURE.md),
 [DATABASE.md](docs/DATABASE.md), and the assignment-sized
 [SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md) (under 800 words).
 
-## Run locally
-
-### Prerequisites
-
-- Node.js `20+`
-- npm `10+`
-- No database installation is required; local development uses SQLite.
-
-### Setup
-
-```bash
-git clone https://github.com/Shanmuk4622/Unthinkable-LastMile-Delivery-Track-assignment.git
-cd Unthinkable-LastMile-Delivery-Track-assignment
-cp .env.example .env
-npm run setup
-npm run dev
-```
-
-Open:
-
-- Frontend: `http://localhost:5173`
-- API: `http://localhost:4000/api`
-- Health: `http://localhost:4000/api/health`
-
-`npm run setup` installs dependencies, generates Prisma Client, creates the
-SQLite schema, and seeds zones, areas, pricing, users, agents, orders, tracking
-events, and notifications. The defaults in `.env.example` work immediately.
-
-### Useful commands
-
-```bash
-npm run dev            # API + web in watch mode
-npm test               # 88 automated tests
-npm run typecheck      # strict TypeScript in both workspaces
-npm run build          # production API and frontend bundles
-npm run db:studio      # inspect the database
-npm run db:reset       # reset and reseed local data
-```
-
 ## Verification
 
-The live deployment was exercised through the real browser UI—not only by API
-calls.
+The [live deployment](https://swiftroute-am6m.onrender.com) was exercised
+through the real browser UI—not only by API calls.
 
 | Area | Verified behaviour |
 |---|---|
@@ -279,22 +252,19 @@ GET    /api/analytics/dashboard            operations metrics
 See [API.md](docs/API.md) for every route, payload, response, validation rule,
 role, and error code.
 
-## Deploy free on Render
+## Evaluation links
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Shanmuk4622/Unthinkable-LastMile-Delivery-Track-assignment)
+| Resource | Link |
+|---|---|
+| **Live website** | **[Open SwiftRoute](https://swiftroute-am6m.onrender.com)** |
+| Video demonstration | [Watch on YouTube](https://youtu.be/oiaITGVpbYY) |
+| Live API health | [Open health endpoint](https://swiftroute-am6m.onrender.com/api/health) |
+| Required system design | [Read SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md) |
+| Complete API contract | [Read API.md](docs/API.md) |
+| Test evidence | [Read TESTING.md](docs/TESTING.md) |
 
-The included [`render.yaml`](render.yaml) provisions PostgreSQL, generates JWT
-secrets, builds both workspaces, applies the schema, and seeds the database.
-
-1. Click **Deploy to Render** and connect the GitHub repository.
-2. Enter non-public values for `SEED_ADMIN_PASSWORD` and
-   `SEED_DEMO_PASSWORD` when prompted.
-3. Wait for the database and web service to become **Available/Live**.
-4. Set `API_PUBLIC_URL` and `WEB_PUBLIC_URL` to the generated web-service URL.
-5. Open `/api/health`, then sign in and place one test order.
-
-For screenshots of every Render screen, exact field values, cold-start/database
-limits, real e-mail setup, Docker, and troubleshooting, follow
+Local setup and hosting instructions are intentionally kept outside this
+evaluation overview: [CONTRIBUTING.md](docs/CONTRIBUTING.md#getting-set-up) and
 [DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Repository map
@@ -350,4 +320,5 @@ limits, real e-mail setup, Docker, and troubleshooting, follow
 ---
 
 Built for the **Unthinkable Last-Mile Delivery Tracker assignment** by
-[Shanmukesh Bonala](https://github.com/Shanmuk4622).
+[Shanmukesh Bonala](https://github.com/Shanmuk4622). Evaluate the deployed
+product at **[swiftroute-am6m.onrender.com](https://swiftroute-am6m.onrender.com)**.
